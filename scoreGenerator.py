@@ -23,7 +23,7 @@ def build_standards_dict(finding, standardsDict):
         if 'Compliance' in finding:
             status = finding['Compliance']['Status']
             prodField = finding['ProductFields']
-            if (finding['RecordState'] == 'ACTIVE'):  # ignore disabled controls
+            if (finding['RecordState'] == 'ACTIVE' and finding['Workflow']['Status'] != 'SUPPRESSED'):  # ignore disabled controls and suppressed findings
                 control = None
                 # get values, json differnt for controls...
                 if 'StandardsArn' in prodField:  # for aws fun
