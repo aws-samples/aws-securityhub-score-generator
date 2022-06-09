@@ -2,8 +2,9 @@ import sys
 import boto3
 import json
 
-def get_standards_status(clientSh):
-    securityHubFindings = clientSh.get_findings(MaxResults=100)
+def get_standards_status(clientSh, accountId):
+    securityHubFindings = clientSh.get_findings(
+        Filters={'AwsAccountId':[{'Value': accountId,'Comparison': 'EQUALS'}]},MaxResults=100)
     standardsDict = {}
     # loop for pagination
     while len(securityHubFindings)>0:
@@ -11,6 +12,7 @@ def get_standards_status(clientSh):
             nextToken = securityHubFindings['NextToken']
             findings = securityHubFindings['Findings']
             securityHubFindings = clientSh.get_findings(
+                Filters={'AwsAccountId':[{'Value': accountId,'Comparison': 'EQUALS'}]},
                 MaxResults=100, NextToken=nextToken)
             for finding in findings:
                 standardsDict = build_standards_dict(finding, standardsDict)  # logic to build dictionary
@@ -57,10 +59,16 @@ def main(argv):
     # Pull the profile from the parameters passed in.
     profile = argv[1]
 
-    #create boto securityhub client
+    # Support for 2nd param of account Id
+    if len(argv) > 2:
+        accountId = argv[2] # Get account id param
+    else:
+        accountId = boto3.client('sts').get_caller_identity().get('Account') # get current account id
+
+    # create boto securityhub client
     client = (boto3.session.Session(profile_name=profile)).client('securityhub')
 
-    scores = generateScore(get_standards_status(client))
+    scores = generateScore(get_standards_status(client, accountId))
     print(scores)
 
 if __name__ == '__main__':
