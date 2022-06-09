@@ -26,7 +26,16 @@ python3 scoreGenerator.py my-profile
 {'cis-aws-foundations-benchmark': {'Score': 76}, 'aws-foundational-security-best-practices': {'Score': 88}}
 ```
 
-Tested with Python 3.7
+Tested with Python 3.7/3.10
+
+For use with Landing zones using a Security Hub administrator account, a 2nd parameter for other accounts in the organization can be passed to get their score:
+
+```python
+export AWS_DEFAULT_REGION=eu-west-2
+
+python3 scoreGenerator.py my-profile 123456789012
+{'cis-aws-foundations-benchmark': {'Score': 90}, 'aws-foundational-security-best-practices': {'Score': 90}}
+```
 
 ## Security
 
