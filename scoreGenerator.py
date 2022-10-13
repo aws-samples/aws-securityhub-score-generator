@@ -3,21 +3,16 @@ import boto3
 import json
 
 def get_standards_status(clientSh, accountId):
-    securityHubFindings = clientSh.get_findings(
-        Filters={'AwsAccountId':[{'Value': accountId,'Comparison': 'EQUALS'}]},MaxResults=100)
+    filters = {'AwsAccountId': [{'Value': accountId, 'Comparison': 'EQUALS'}],
+               'ProductName': [{'Value': 'Security Hub', 'Comparison': 'EQUALS'}],
+               'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]}
+
+    pages = clientSh.get_paginator('get_findings').paginate(Filters=filters, MaxResults=100)
     standardsDict = {}
-    # loop for pagination
-    while len(securityHubFindings)>0:
-        if 'NextToken' in securityHubFindings:
-            nextToken = securityHubFindings['NextToken']
-            findings = securityHubFindings['Findings']
-            securityHubFindings = clientSh.get_findings(
-                Filters={'AwsAccountId':[{'Value': accountId,'Comparison': 'EQUALS'}]},
-                MaxResults=100, NextToken=nextToken)
-            for finding in findings:
-                standardsDict = build_standards_dict(finding, standardsDict)  # logic to build dictionary
-        else:
-            break  # none left then end
+
+    for page in pages:
+        for finding in page['Findings']:
+            standardsDict = build_standards_dict(finding, standardsDict)
     return standardsDict
 
 def build_standards_dict(finding, standardsDict):
