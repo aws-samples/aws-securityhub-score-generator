@@ -22,20 +22,18 @@ def build_standards_dict(finding, standardsDict):
             prodField = finding['ProductFields']
             if (finding['RecordState'] == 'ACTIVE' and finding['Workflow']['Status'] != 'SUPPRESSED'):  # ignore disabled controls and suppressed findings
                 control = None
-                # get values, json differnt for controls...
-                if 'StandardsArn' in prodField:  # for aws fun
-                    control = prodField['StandardsArn']
-                    rule = prodField['ControlId']
-                elif 'StandardsGuideArn' in prodField:  # for cis fun
-                    control = prodField['StandardsGuideArn']
-                    rule = prodField['RuleId']
-                #ignore custom findings
-                if control is not None:
-                    controlName = control.split('/')[1]  # get readable name from arn
+                rule = finding['Compliance']['SecurityControlId']
+                for control_obj in finding['Compliance']['AssociatedStandards']:
+                  control = control_obj['StandardsId']
+
+                  #ignore custom findings
+                  if control is not None:
+                    controlName = f"{control.split('/')[1]}_{control.split('/')[3]}"  # get readable name from arn
                     if controlName not in standardsDict:
-                        standardsDict[controlName] = {rule: status} # add new in
+                      standardsDict[controlName] = {rule: status} # add new in
                     elif not (rule in standardsDict[controlName] and (status == 'PASSED')):  # no need to update if passed
-                        standardsDict[controlName][rule] = status
+                      standardsDict[controlName][rule] = status
+
     return standardsDict
 
 def generateScore(standardsDict):
