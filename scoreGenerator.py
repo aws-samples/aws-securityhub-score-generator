@@ -22,20 +22,18 @@ def build_standards_dict(finding, standardsDict):
             prodField = finding['ProductFields']
             if (finding['RecordState'] == 'ACTIVE' and finding['Workflow']['Status'] != 'SUPPRESSED'):  # ignore disabled controls and suppressed findings
                 control = None
-                # get values, json differnt for controls...
-                if 'StandardsArn' in prodField:  # for aws fun
-                    control = prodField['StandardsArn']
-                    rule = prodField['ControlId']
-                elif 'StandardsGuideArn' in prodField:  # for cis fun
-                    control = prodField['StandardsGuideArn']
-                    rule = prodField['RuleId']
-                #ignore custom findings
-                if control is not None:
-                    controlName = control.split('/')[1]  # get readable name from arn
+                rule = finding['Compliance']['SecurityControlId']
+                for control_obj in finding['Compliance']['AssociatedStandards']:
+                  control = control_obj['StandardsId']
+
+                  #ignore custom findings
+                  if control is not None:
+                    controlName = f"{control.split('/')[1]}_{control.split('/')[3]}"  # get readable name from arn
                     if controlName not in standardsDict:
-                        standardsDict[controlName] = {rule: status} # add new in
+                      standardsDict[controlName] = {rule: status} # add new in
                     elif not (rule in standardsDict[controlName] and (status == 'PASSED')):  # no need to update if passed
-                        standardsDict[controlName][rule] = status
+                      standardsDict[controlName][rule] = status
+
     return standardsDict
 
 def generateScore(standardsDict):
@@ -51,18 +49,9 @@ def generateScore(standardsDict):
     return resultDict
 
 def main(argv):
-    # Pull the profile from the parameters passed in.
-    profile = argv[1]
-
-    # Support for 2nd param of account Id
-    if len(argv) > 2:
-        accountId = argv[2] # Get account id param
-    else:
-        accountId = boto3.client('sts').get_caller_identity().get('Account') # get current account id
-
-    # create boto securityhub client
-    client = (boto3.session.Session(profile_name=profile)).client('securityhub')
-
+    accountId = boto3.client('sts').get_caller_identity().get('Account')
+    print(f"AccountId: {accountId}")
+    client = boto3.client('securityhub', region_name="us-east-1")
     scores = generateScore(get_standards_status(client, accountId))
     print(scores)
 
