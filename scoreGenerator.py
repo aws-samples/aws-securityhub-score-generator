@@ -49,7 +49,7 @@ def generateScore(standardsDict):
     return resultDict
 
 def main(argv):
-   # Pull the profile from the parameters passed in.
+    # Pull the profile from the parameters passed in.
     profile = argv[1]
 
     # Support for 2nd param of account Id
