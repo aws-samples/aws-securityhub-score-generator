@@ -49,9 +49,18 @@ def generateScore(standardsDict):
     return resultDict
 
 def main(argv):
-    accountId = boto3.client('sts').get_caller_identity().get('Account')
-    print(f"AccountId: {accountId}")
-    client = boto3.client('securityhub', region_name="us-east-1")
+   # Pull the profile from the parameters passed in.
+    profile = argv[1]
+
+    # Support for 2nd param of account Id
+    if len(argv) > 2:
+        accountId = argv[2] # Get account id param
+    else:
+        accountId = boto3.client('sts').get_caller_identity().get('Account') # get current account id
+
+    # create boto securityhub client
+    client = (boto3.session.Session(profile_name=profile)).client('securityhub')
+
     scores = generateScore(get_standards_status(client, accountId))
     print(scores)
 
